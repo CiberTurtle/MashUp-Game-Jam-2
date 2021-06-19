@@ -1,0 +1,14 @@
+{
+	"name": "com.ciber-turtle.quick-script",
+	"version": "0.0.1",
+	"displayName": "Quick Script",
+	"description": "A fast way to setup game logic. Useful for game jams!",
+	"dependencies": {},
+	"keywords": [
+		"Scripting"
+	],
+	"author": {
+		"name": "Ciber_Turtle",
+		"url": "https://github.com/CiberTurtle/Quick-Script"
+	}
+}
