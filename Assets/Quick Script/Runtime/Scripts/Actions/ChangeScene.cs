@@ -13,6 +13,8 @@ namespace QuickScript
 		{
 			onBeforeChangeScene.Invoke();
 
+			Time.timeScale = 1;
+
 			var index = SceneManager.GetActiveScene().buildIndex;
 
 			if (index > 0)
@@ -22,6 +24,8 @@ namespace QuickScript
 		public void NextScene()
 		{
 			onBeforeChangeScene.Invoke();
+
+			Time.timeScale = 1;
 
 			var index = SceneManager.GetActiveScene().buildIndex;
 
@@ -33,12 +37,16 @@ namespace QuickScript
 		{
 			onBeforeChangeScene.Invoke();
 
+			Time.timeScale = 1;
+
 			SceneManager.LoadScene(index);
 		}
 
 		public void LoadScene(string name)
 		{
 			onBeforeChangeScene.Invoke();
+
+			Time.timeScale = 1;
 
 			SceneManager.LoadScene(name);
 		}

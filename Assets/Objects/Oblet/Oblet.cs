@@ -23,6 +23,7 @@ public class Oblet : MonoBehaviour
 	[Space]
 
 	public float speedToInteract;
+	public float interationCooldown;
 
 	[Space]
 
@@ -48,18 +49,20 @@ public class Oblet : MonoBehaviour
 	public float growSpeed = 0.05f;
 	public float maxEnergy = 5f;
 
-	[Space]
-
-	[ReadOnly] public Vector2 velocity;
-	[ReadOnly] public Vector2 move;
-	[ReadOnly] public Vector2 targetPosition;
+	[System.NonSerialized] public bool isBeingPickedup;
+	[System.NonSerialized] public Vector2 velocity;
+	Vector2 move;
+	Vector2 targetPosition;
+	float cooldown;
 
 	public Vector2 position { get => rb.position; set => rb.position = value; }
 
 	ParticleSystem.ShapeModule particleShape;
 
-	void Awake()
+	void Start()
 	{
+		particleShape = particle.shape;
+
 		if (Mathf.Approximately(transform.position.y, 20.0f))
 			transform.position = new Vector2(Random.Range(-wanderRange.x, wanderRange.x), Random.Range(-wanderRange.y, wanderRange.y));
 
@@ -68,23 +71,27 @@ public class Oblet : MonoBehaviour
 			transform.position = new Vector2(Random.Range(-wanderRange.x, wanderRange.x), Random.Range(-wanderRange.y, wanderRange.y));
 			growSpeed = 0;
 		}
+		else
+		{
+			GameManager.current.numberOfOblets++;
+		}
 
 		trail.Clear();
-	}
-
-	void Start()
-	{
-		particleShape = particle.shape;
 
 		NewWanderTarget();
 	}
 
 	void FixedUpdate()
 	{
+		cooldown -= Time.fixedDeltaTime;
+
+		var wasMaxEnergy = energy >= maxEnergy;
 		energy += growSpeed * Time.fixedDeltaTime;
 		energy = Mathf.Clamp(energy, 0, maxEnergy);
+		if (!wasMaxEnergy && energy >= maxEnergy)
+			GameManager.current.PlaySound("Max");
 
-		var betterSize = Mathf.Clamp(energy, 1.0f, float.PositiveInfinity);
+		var betterSize = energy + 0.5f;
 
 		bodySprite.localScale = Vector3.Lerp(bodySprite.localScale, new Vector3(betterSize, betterSize, 1), 15 * Time.fixedDeltaTime);
 		circleCollider.radius = betterSize / 2;
@@ -119,14 +126,16 @@ public class Oblet : MonoBehaviour
 		{
 			if (oblet == this) continue;
 
-			moveAway += (rb.position - oblet.position) * (Vector2.Distance(rb.position, oblet.position) / nearbyObletsRange);
+			moveAway += (rb.position - oblet.position) * (Vector2.Distance(rb.position, oblet.position) / (nearbyObletsRange + oblet.energy / 2));
 		}
 
 		move += moveAway * moveAwaySpeed;
 
-		if (velocity.sqrMagnitude > speedToInteract * speedToInteract)
+		if (cooldown < 0 && velocity.sqrMagnitude > speedToInteract * speedToInteract)
 		{
-			var ob = Physics2D.OverlapCircleAll(transform.position, energy / 2 + 0.15f, obletsMask).FirstOrDefault(x => x.gameObject != gameObject && x.GetComponent<Oblet>().energy > 1)?.GetComponent<Oblet>();
+			var ob = Physics2D.OverlapCircleAll(transform.position, energy / 2 + 0.15f, obletsMask)
+			.Select(x => x.GetComponent<Oblet>())
+			.FirstOrDefault(x => x.gameObject != gameObject && x.energy > 1 && x.cooldown < 0 && !x.isBeingPickedup);
 
 			if (ob)
 			{
@@ -136,13 +145,15 @@ public class Oblet : MonoBehaviour
 					{
 						for (int i = 0; i < 2; i++)
 						{
-							var newOb = Instantiate(oblet, ob.position, Quaternion.identity).GetComponent<Oblet>();
+							var newOb = Instantiate(oblet, i > 0 ? ob.position + velocity.normalized * (ob.energy / 2) : ob.position, Quaternion.identity).GetComponent<Oblet>();
 							newOb.energy = ob.energy / 2;
 							newOb.growSpeed = ob.growSpeed + Random.Range(-0.015f, 0.015f);
 							newOb.maxEnergy = ob.maxEnergy + Random.Range(-0.1f, 0.1f);
-
-							velocity = Vector2.zero;
+							if (i > 0) newOb.velocity = velocity / 2;
 						}
+
+						velocity = Vector2.zero;
+						cooldown = interationCooldown;
 
 						GameManager.current.PlaySound("Split");
 						Instantiate(splitEffect, ob.position, Quaternion.identity);
@@ -155,7 +166,17 @@ public class Oblet : MonoBehaviour
 						ob.growSpeed += growSpeed * Random.Range(0.0f, 0.25f);
 						ob.maxEnergy += maxEnergy * Random.Range(0.0f, 0.25f);
 
-						GameManager.current.PlaySound("Absorb");
+						cooldown = interationCooldown;
+
+						if (ob.energy > ob.maxEnergy)
+						{
+							// GameManager.current.PlaySound("Max");
+							GameManager.current.PlaySound("Absorb Slow");
+						}
+						else
+						{
+							GameManager.current.PlaySound("Absorb");
+						}
 						Instantiate(mergeEffect, ob.position, Quaternion.identity);
 
 						Destroy(gameObject);
@@ -172,9 +193,12 @@ public class Oblet : MonoBehaviour
 
 		if (Mathf.Abs(rb.position.x) > depositRange.x || Mathf.Abs(rb.position.y) > depositRange.y)
 		{
-			GameManager.current.energy += energy * (energy * 0.25f);
+			GameManager.current.AddEnergy(energy * (energy * 0.25f));
 
-			GameManager.current.PlaySound("Deposit");
+			if (energy > 10f)
+				GameManager.current.PlaySound("Deposit Large");
+			else
+				GameManager.current.PlaySound("Deposit");
 			Instantiate(depositEffect, position, Quaternion.identity);
 
 			Destroy(gameObject);
@@ -185,6 +209,12 @@ public class Oblet : MonoBehaviour
 	void NewWanderTarget()
 	{
 		targetPosition = new Vector2(Random.Range(-wanderRange.x, wanderRange.x), Random.Range(-wanderRange.y, wanderRange.y));
+	}
+
+	void OnDestroy()
+	{
+		if (GameManager.current)
+			GameManager.current.numberOfOblets--;
 	}
 
 	void OnDrawGizmos()

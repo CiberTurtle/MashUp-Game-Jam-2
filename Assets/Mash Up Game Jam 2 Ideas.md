@@ -1,0 +1,27 @@
+- Fighting Game
+  - Use a camera to "kill"
+  - Use music to "kill"
+  - Parry to kill
+  - Infights to kill
+  - Despawn/Unload to kill
+  - Jump on things to ki- oh wait
+  - Place down blocks to kill/suffocate things
+  - Use physics to kill things (like in botw)
+  - Use the environment to kill
+- Tower Defence Game
+  - Use plants to de- oh wait
+  - Setup train tracks
+  - Drag things into deadly things (like spikes or a void) to kill them (either with a mouse or with the player)
+- Puzzel Game
+  - Use hints to solve puzzels (kinda like a riddle)
+  - Your goal is to mess up the puzzel (yeah idk, maybe like a find a way to die kinda game)
+- Statagy Game
+  - Raise a population but killing/using some of them for fuel or somthing
+- Platformer Game
+  - Recoil
+  - Rocket Jumping!!! (would be more of a rage game kinda thing)
+  - Get hit to move
+- Arcade Game
+  - Snake but with a parade (like in a hat in time)
+- Misc
+  - Unconventional controls

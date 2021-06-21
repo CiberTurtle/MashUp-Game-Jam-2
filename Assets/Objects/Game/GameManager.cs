@@ -2,6 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using DG.Tweening;
 
 public class GameManager : MonoBehaviour
 {
@@ -12,10 +13,8 @@ public class GameManager : MonoBehaviour
 
 	[Space]
 
-	public float energy;
-	float energyForNextLevel = 100.0f;
-	float energyLoseSpeed = 1.0f;
-	int level = 1;
+	public GameObject[] tutSegments;
+	public float tutSegmentTime = 8.0f;
 
 	[Space]
 
@@ -23,13 +22,33 @@ public class GameManager : MonoBehaviour
 	public AudioClip dropClip;
 	public AudioClip splitClip;
 	public AudioClip absorbClip;
+	public AudioClip absorbSlowClip;
 	public AudioClip depositClip;
+	public AudioClip depositLargeClip;
+	public AudioClip maxClip;
+	public AudioClip nextLevelClip;
+	public AudioClip warningClip;
 
 	[Space]
 
 	public Image energyBar;
 	public TMP_Text energyText;
-	public GameObject death;
+	public CanvasGroup deathScreen;
+	public TMP_Text deathMessage;
+	public TMP_Text deathScore;
+
+	[System.NonSerialized] public int numberOfOblets;
+
+	ulong score;
+	float energy;
+	float energyForNextLevel = 100.0f;
+	float energyLoseSpeed = 1.0f;
+	int level = 1;
+
+	int currentTutSegment;
+	float currentTutTimeAlive;
+
+	bool inDanger;
 
 	Vector2 mouseScreenPos;
 	Vector2 mousePos;
@@ -70,6 +89,8 @@ public class GameManager : MonoBehaviour
 
 			if (dragging)
 			{
+				dragging.isBeingPickedup = true;
+
 				PlaySound("Pickup");
 			}
 		}
@@ -80,6 +101,7 @@ public class GameManager : MonoBehaviour
 			if (dragging)
 			{
 				dragging.velocity = dragVelocity;
+				dragging.isBeingPickedup = false;
 				dragging = null;
 
 				PlaySound("Drop");
@@ -96,21 +118,76 @@ public class GameManager : MonoBehaviour
 			dragVelocity = dragging.rb.position - lastPos;
 		}
 
-		energy -= energyLoseSpeed * Time.fixedDeltaTime;
-
-		if (energy < 0)
+		if (currentTutSegment < tutSegments.Length)
 		{
-			death.SetActive(true);
-			Time.timeScale = 0;
+			currentTutTimeAlive += Time.deltaTime;
+			if (currentTutTimeAlive > tutSegmentTime)
+			{
+				currentTutTimeAlive = 0;
+
+				tutSegments[currentTutSegment].GetComponent<CanvasGroup>().DOFade(0, 0.25f);
+				currentTutSegment++;
+
+				if (currentTutSegment < tutSegments.Length)
+				{
+					tutSegments[currentTutSegment].GetComponent<CanvasGroup>().DOFade(1, 0.25f);
+				}
+				else
+				{
+					energy = 50;
+					energyText.transform.parent.GetComponent<CanvasGroup>().DOFade(1, 0.25f);
+				}
+			}
 		}
 		else
-		if (energy > energyForNextLevel)
 		{
-			level++;
-			energyLoseSpeed = level + ((float)level * level / 22);
-			energyForNextLevel = 100 + Mathf.Pow(10, level) / ((float)level / 2);
-			Debug.Log($"{energyLoseSpeed} | {energyForNextLevel}");
+			energy -= energyLoseSpeed * Time.fixedDeltaTime;
+
+			if (energy < energyLoseSpeed * 10)
+			{
+				if (!inDanger)
+					PlaySound("Warning");
+				inDanger = true;
+			}
+
+			if (energy < 0)
+			{
+				Lose("Obletopia ran out of energy");
+			}
+			else
+			if (energy > energyForNextLevel)
+			{
+				level++;
+				energyLoseSpeed = 1 + ((float)(level - 1) / 2);
+				energyForNextLevel = 100 + Mathf.Pow(10, level) / ((float)level / 2);
+				Debug.Log($"Loss: {energyLoseSpeed} - Next: {energyForNextLevel}");
+
+				PlaySound("Next Level");
+			}
 		}
+
+		if (numberOfOblets < 1 && Time.timeScale != 0 && Time.timeSinceLevelLoad > 3)
+		{
+			Lose("Everyone died in Obletopia");
+		}
+	}
+
+	public void AddEnergy(float energy)
+	{
+		this.energy += energy;
+		score += (ulong)Mathf.FloorToInt(score);
+	}
+
+	public void Lose(string msg)
+	{
+		deathMessage.text = msg;
+		deathScore.text = $"Score: {score}";
+		deathScreen.gameObject.SetActive(true);
+		deathScreen.alpha = 0;
+		deathScreen.transform.localScale = new Vector3(1.25f, 1.25f, 1);
+		deathScreen.DOFade(1, 0.5f).SetUpdate(true);
+		deathScreen.transform.DOScale(Vector3.one, 0.67f).SetEase(Ease.OutBounce).SetUpdate(true);
+		Time.timeScale = 0;
 	}
 
 	void Update()
@@ -125,17 +202,22 @@ public class GameManager : MonoBehaviour
 		{
 			case "Split": PlaySound(splitClip); break;
 			case "Absorb": PlaySound(absorbClip); break;
+			case "Absorb Slow": PlaySound(absorbSlowClip); break;
 			case "Deposit": PlaySound(depositClip); break;
+			case "Deposit Large": PlaySound(depositLargeClip, false); break;
 			case "Pickup": PlaySound(pickupClip); break;
 			case "Drop": PlaySound(dropClip); break;
+			case "Max": PlaySound(maxClip); break;
+			case "Next Level": PlaySound(nextLevelClip); break;
+			case "Warning": PlaySound(warningClip); break;
 		}
 	}
 
-	public void PlaySound(AudioClip clip)
+	public void PlaySound(AudioClip clip, bool randomPitch = true)
 	{
 		var s = gameObject.AddComponent<AudioSource>();
 		s.clip = clip;
-		s.pitch = Random.Range(0.9f, 1.1f);
+		if (randomPitch) s.pitch = Random.Range(0.9f, 1.1f);
 		s.Play();
 		Destroy(s, clip.length + 0.1f);
 	}

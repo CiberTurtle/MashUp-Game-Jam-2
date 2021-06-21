@@ -38,5 +38,5 @@ Material:
     m_Ints: []
     m_Floats: []
     m_Colors:
-    - Speed: {r: 0.1, g: 0.025, b: 0, a: 0}
+    - Speed: {r: 0.05, g: 0.025, b: 0, a: 0}
   m_BuildTextureStacks: []
