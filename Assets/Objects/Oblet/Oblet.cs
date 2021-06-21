@@ -195,7 +195,7 @@ public class Oblet : MonoBehaviour
 		{
 			GameManager.current.AddEnergy(energy * (energy * 0.25f));
 
-			if (energy > 10f)
+			if (energy > 13f)
 				GameManager.current.PlaySound("Deposit Large");
 			else
 				GameManager.current.PlaySound("Deposit");

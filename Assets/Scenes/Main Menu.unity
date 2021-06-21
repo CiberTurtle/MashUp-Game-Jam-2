@@ -393,11 +393,12 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: The Oblets are strange creatures that when punctured, release large amounts
-    of energy. This property made it trivial for the Oblets to build their own Utopia,
-    appropriately named Obletopia. Although killing large amounts of our kind is
-    bad for us, for the Oblets, it's just your average day. This is because Oblets
-    can multiply very easily, allowing their societies to grow quickly.
+  m_text: The Oblets are strange creatures that when punctured, release tremendous
+    amounts of energy. The older they get, the more energy they release. This property
+    made it trivial for the Oblets to build their own Utopia, appropriately named
+    Obletopia. Although killing large amounts of our kind is bad for us, for the
+    Oblets, it's just your average day. This is because Oblets can multiply very
+    easily, allowing their societies to grow at incredible speeds.
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: b7566dc1de24b6d479b26c06ff9dfa3e, type: 2}
   m_sharedMaterial: {fileID: -4806585681508275676, guid: b7566dc1de24b6d479b26c06ff9dfa3e, type: 2}
@@ -436,12 +437,12 @@ MonoBehaviour:
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_wordSpacing: 0
-  m_lineSpacing: 0
+  m_lineSpacing: 6
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
   m_enableWordWrapping: 1
-  m_wordWrappingRatios: 1
+  m_wordWrappingRatios: 0.4
   m_overflowMode: 0
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}

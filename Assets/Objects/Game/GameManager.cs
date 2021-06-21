@@ -175,7 +175,7 @@ public class GameManager : MonoBehaviour
 	public void AddEnergy(float energy)
 	{
 		this.energy += energy;
-		score += (ulong)Mathf.FloorToInt(score);
+		score += (ulong)Mathf.FloorToInt(energy);
 	}
 
 	public void Lose(string msg)
